@@ -47,15 +47,40 @@ El diseño de clases propuesto para la práctica es el siguiente:
 
 ````</code>
 classDiagram
-    class AgentePrincipal{
-        +void mostrarInterfaz()
-        +void registrarInforme()
+    class AgentePrincipal {
+        - mainGUI : VistaPrincipal
+        - startTime : long
+        + setup() : void
+        + createSecondAgent(operation, behavior, operands) : void
+        + recibirInformes() : void
     }
-    class AgenteSecundario{
-        +void recibirParametros()
-        +void crearAgente()
-        +void enviarResultado()
+
+    class VistaPrincipal {
+        - comboOperacion : JComboBox
+        - comboComportamiento : JComboBox
+        - operandFields : List<JTextField>
+        - botonConfirmar : JButton
+        - textAreaInformes : JTextArea
+        + initComponents() : void
+        + getSelectedOperation() : String
+        + getSelectedBehavior() : String
+        + getOperands() : List<String or Double>
+        + appendReport(report : String) : void
     }
-    AgentePrincipal "1" --> "1..*" AgenteSecundario
+
+    class Controlador {
+        + actionPerformed(event : ActionEvent) : void
+    }
+
+    AgentePrincipal --> VistaPrincipal : "Tiene una instancia de"
+    AgentePrincipal --> Controlador : "Instancia para manejar eventos"
+    VistaPrincipal --> Controlador : "Eventos de la UI"
+````
+
+### **3.2. Descripción de las clases**
+
+- **AgentePrincipal**: Clase que representa el agente principal de la práctica. Tiene una referencia a la vista principal y un método para configurar la interfaz y crear el agente secundario.
+
+
 
 
