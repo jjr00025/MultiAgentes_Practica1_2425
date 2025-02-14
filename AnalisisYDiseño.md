@@ -23,6 +23,7 @@ Donde el usuario podrá:
 Además, debe crear dinámicamente el **Agente Secundario** en JADE, al que le pasará como argumentos de inicialización los parámetros seleccionados en la interfaz.
 
 ## **1.2 Agente Secundario**
+El **Agente Secundario** se crea dinámicamente tras la pulsación del botón en la interfaz y debe realizar las siguientes tareas:
 
 #### **1.2.1 Recepción de parámetros**
 Al iniciarse el agente recibe los siguientes datos:
@@ -300,7 +301,6 @@ public class RecibirInformesBehaviour extends CyclicBehaviour {
         ACLMessage msg = myAgent.receive();
         if (msg != null) {
             if (msg.getPerformative() == ACLMessage.INFORM) {
-                // Suponiendo que el contenido del mensaje es un String con el reporte
                 String reporte = msg.getContent();
                 // Llamar al método del agente para manejar el informe
                 ((AgentePrincipal) myAgent).recibirInformes(reporte);
