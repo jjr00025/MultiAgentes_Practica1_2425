@@ -20,6 +20,9 @@ import java.awt.event.ActionListener;
 public class AgentePrincipal extends Agent {
 
     private AgentePrincipalGUI gui;
+    // Variable para el área de resultados
+    private JTextArea txtAreaResultados;
+
 
     @Override
     protected void setup() {
@@ -36,6 +39,7 @@ public class AgentePrincipal extends Agent {
                 ACLMessage mensaje = receive();
                 if (mensaje != null) {
                     System.out.println("Mensaje recibido: " + mensaje.getContent());
+                    actualizarInterfaz(mensaje.getContent());
                 } else {
                     block();
                 }
@@ -48,7 +52,7 @@ public class AgentePrincipal extends Agent {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Agente Principal");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(400, 300);
+            frame.setSize(500, 400);
             frame.setLayout(new BorderLayout());
 
             // 🟢 MENÚ SUPERIOR
@@ -56,51 +60,51 @@ public class AgentePrincipal extends Agent {
 
             // 🟢 Menú de Operaciones
             JMenu menuOperaciones = new JMenu("Operaciones");
-            JMenuItem sumaItem = new JMenuItem("Suma");
+            JRadioButtonMenuItem sumaItem = new JRadioButtonMenuItem("Suma", true);
+            JRadioButtonMenuItem restaItem = new JRadioButtonMenuItem("Resta");
+            JRadioButtonMenuItem multiplicacionItem = new JRadioButtonMenuItem("Multiplicación");
+
+            ButtonGroup operacionGroup = new ButtonGroup();
+            operacionGroup.add(sumaItem);
+            operacionGroup.add(restaItem);
+            operacionGroup.add(multiplicacionItem);
+
             menuOperaciones.add(sumaItem);
+            menuOperaciones.add(restaItem);
+            menuOperaciones.add(multiplicacionItem);
             menuBar.add(menuOperaciones);
 
             // 🟢 Menú de Comportamientos
             JMenu menuComportamientos = new JMenu("Comportamientos");
-            JMenuItem oneShotItem = new JMenuItem("OneShot");
-            JMenu cyclicItem = new JMenu("Cyclic");
-            JMenu tickerItem = new JMenu("Ticker");
-            JMenu wakerItem = new JMenu("Waker");
+            JRadioButtonMenuItem oneShotItem = new JRadioButtonMenuItem("OneShot", true);
+            JRadioButtonMenuItem cyclicItem = new JRadioButtonMenuItem("Cyclic");
+
+            ButtonGroup comportamientoGroup = new ButtonGroup();
+            comportamientoGroup.add(oneShotItem);
+            comportamientoGroup.add(cyclicItem);
 
             menuComportamientos.add(oneShotItem);
             menuComportamientos.add(cyclicItem);
-            menuComportamientos.add(tickerItem);
-            menuComportamientos.add(wakerItem);
             menuBar.add(menuComportamientos);
 
-            //Botones con el número de ciclos
+            // 🟢 Submenú de ciclos
+            JMenu submenuCiclos = new JMenu("Número de ciclos");
             ButtonGroup cicloGroup = new ButtonGroup();
             JRadioButtonMenuItem[] cicloItems = new JRadioButtonMenuItem[5];
 
             for (int i = 0; i < 5; i++) {
                 int ciclos = i + 2;
                 cicloItems[i] = new JRadioButtonMenuItem(ciclos + " ciclos");
-                cicloItems[i].addActionListener(e -> System.out.println("Seleccionado: " + ciclos + " ciclos"));
-                cyclicItem.add(cicloItems[i]);
-                tickerItem.add(cicloItems[i]);
-                wakerItem.add(cicloItems[i]);
+                cicloGroup.add(cicloItems[i]);
+                submenuCiclos.add(cicloItems[i]);
             }
 
-
-            // 🟢 Acciones de selección de comportamiento
-            final String[] comportamientoSeleccionado = {"OneShot"};
-            oneShotItem.addActionListener(e -> comportamientoSeleccionado[0] = "OneShot");
-            cyclicItem.addActionListener(e -> comportamientoSeleccionado[0] = "Cyclic");
-            tickerItem.addActionListener(e -> comportamientoSeleccionado[0] = "Ticker");
-            wakerItem.addActionListener(e -> comportamientoSeleccionado[0] = "Waker");
-
-
-
-
+            // ✅ Añadimos el submenú de ciclos dentro del menú de comportamientos
+            menuComportamientos.add(submenuCiclos);
 
             frame.setJMenuBar(menuBar);
 
-            // 🟢 PANEL CENTRAL CON CAMPOS DE TEXTO Y BOTÓN
+            // 🟢 PANEL CENTRAL
             JPanel panel = new JPanel(new GridLayout(3, 2));
             JTextField num1Field = new JTextField(5);
             JTextField num2Field = new JTextField(5);
@@ -115,21 +119,32 @@ public class AgentePrincipal extends Agent {
             frame.add(panel, BorderLayout.CENTER);
 
             // 🟢 ÁREA DE RESULTADOS
-            JTextArea txtAreaResultados = new JTextArea(5, 30);
+            txtAreaResultados = new JTextArea(5, 30);
             txtAreaResultados.setEditable(false);
             frame.add(new JScrollPane(txtAreaResultados), BorderLayout.SOUTH);
 
-            // 🟢 Acción del botón Ejecutar
+            // ✅ Acción del botón Ejecutar
             ejecutarButton.addActionListener(e -> {
-                int ciclosSeleccionados = 0;
-                for (int i = 0; i < 5; i++) {
-                    if (cicloItems[i].isSelected()) {
-                        ciclosSeleccionados = i + 2;
-                        break;
+                // Obtener operación seleccionada
+                String operacionSeleccionada = "Suma"; // Por defecto
+                if (restaItem.isSelected()) operacionSeleccionada = "Resta";
+                if (multiplicacionItem.isSelected()) operacionSeleccionada = "Multiplicación";
+
+                // Obtener comportamiento seleccionado
+                String comportamientoSeleccionado = oneShotItem.isSelected() ? "OneShot" : "Cyclic";
+                int ciclosSeleccionados = 2; // 🔹 Valor predeterminado para evitar 0 ciclos
+
+                if (cyclicItem.isSelected()) {
+                    for (JRadioButtonMenuItem item : cicloItems) {
+                        if (item.isSelected()) {
+                            ciclosSeleccionados = Integer.parseInt(item.getText().split(" ")[0]);
+                            break;
+                        }
                     }
                 }
 
-                lanzarAgenteSecundario(num1Field.getText(), num2Field.getText(), "Suma", comportamientoSeleccionado[0]);
+                // Enviar la operación seleccionada correctamente
+                lanzarAgenteSecundario(num1Field.getText(), num2Field.getText(), operacionSeleccionada, comportamientoSeleccionado, ciclosSeleccionados);
             });
 
             frame.setVisible(true);
@@ -137,16 +152,19 @@ public class AgentePrincipal extends Agent {
     }
 
 
-
-
-
+    // Método para actualizar la interfaz gráfica con el resultado
+    private void actualizarInterfaz(String resultado) {
+        SwingUtilities.invokeLater(() -> {
+            txtAreaResultados.append(resultado + "\n"); // Agregar el nuevo resultado en una nueva línea
+        });
+    }
 
     // Método para lanzar el AgenteSecundario
-    private void lanzarAgenteSecundario(String n1, String n2, String operacion, String comportamiento) {
+    private void lanzarAgenteSecundario(String n1, String n2, String operacion, String comportamiento, int ciclos) {
         try {
             int num1 = Integer.parseInt(n1);
             int num2 = Integer.parseInt(n2);
-            Object[] args = {num1, num2, operacion, comportamiento, getLocalName()};
+            Object[] args = {num1, num2, operacion, comportamiento, ciclos,getLocalName()};
 
             // Crear el agente secundario
             MicroRuntime.startAgent("AgenteSecundario", "es.ujaen.ssmmaa.agentes.AgenteSecundario", args);
